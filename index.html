@@ -1,40 +1,105 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8" />
-        <title>Alarm Application</title>
-        <script src="https://vuejs.org/js/vue.js"></script>
-        <script scr="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js"></script>
-
-    </head>
- <body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://vuejs.org/js/vue.js"></script>
+    <title>Alarm Application</title>
+  </head>
+  <body>
     <div id="app">
-        <h1>{{ text }}</h1>
-        <input type="datetime-local" name="alarmInput" >
-        <button v-on:click="setAlarm()">Set!</button>
-        <div>
-            <p> {{setAlarm()}} </p>
-        </div>
-    </div>
- </body>
- <script>
-    const app = new Vue({
-    el: "#app",
-    data: {
-        text: "Set your alarm!",
-        alarm:""
-    },
-    created:function(){
-        this.debouncedSetAlarm=_.debounce(this.setAlarm,200);
-        return;
-    },
-    methods: {
-        setAlarm: function(){
-           return this.alarm += document.querySelector("input[name=alarmInput]").value;
-        }
+      <h1>{{ text }}</h1>
+      <audio id="audio" controls style="display: block ">
+        <source
+          src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+          type="audio/mpeg"
+        />
+      </audio>
+      <p>Press spacebar to play/pause your alarm!</p>
+      <input type="datetime-local" name="alarmInput" />
+      <button v-on:click="waiting()">Set!</button>
+      <button v-on:click="momentToDelete()">Delete!</button>
+      <div>
+        <p>Your alarms:</p>
+        <p>{{info}}</p>
+      </div>
+      <div v-html="alarm">
         
-    }
-    
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.20.0/axios.min.js"></script>
+  </body>
+  <script>
+    document.addEventListener("keydown", function (e) {
+      if (e.keyCode == 32) { //spacebar 
+        if (document.getElementById("audio").paused) {
+          document.getElementById("audio").play();
+          return;
+        } else {
+          document.getElementById("audio").pause();
+          return;
+        }
+      }
     });
- </script>
- </html>
+
+    const app = new Vue({
+      el: "#app",
+      data: {
+        text: `Set your alarm!`,
+        alarm: "",
+        info: "",
+      },
+      created: function () {
+        this.debouncedSetAlarm = _.debounce(this.setAlarm, 200);
+        this.debouncedDelete = _.debounce(this.delete, 200);
+        return;
+      },
+      methods: {
+        waiting() {
+          //this.info= "wait!";
+          this.debouncedSetAlarm();
+          return;
+        },
+        setAlarm() {
+          var expression = document.querySelector("input[name=alarmInput]")
+            .value;
+          if(expression == ""){
+            this.info="Please select your alarm!" ;
+          } else if (this.alarm.includes(expression)) {
+            //alarm has been set
+            this.info = "This alarm has been already set!";
+          } else {
+            this.info = "New alarm has been added!";
+            this.alarm +=
+              "<p>" + expression + "</p>";
+          }
+          return;
+        },
+        momentToDelete() {
+          this.debouncedDelete();
+          return;
+        },
+        delete() {
+          var expressiontoDelete = document.querySelector(
+            "input[name=alarmInput]"
+          ).value;
+          if(expressiontoDelete == ""){
+            return this.info = "There is no alarm has been set";
+          }else{
+            if (!(this.alarm.includes(expressiontoDelete))){
+              if (this.alarm == ""){
+                return this.info = "No alarm to delete!";
+              }
+              return this.info = "This alarm doesn't exist!"+this.alarm ;
+            }else{
+              var str = this.alarm.replace("<p>" + expressiontoDelete + "</p>", "");
+              this.info = "Alarm has been deleted!";
+              return (this.alarm = str);
+            }
+          } 
+        },
+      },
+    });
+  </script>
+</html>
